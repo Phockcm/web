@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["node_modules", "hexashop-1.0.0", ".next", "laravel-api - v.0.0.2"]
+}
