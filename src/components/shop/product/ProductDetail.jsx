@@ -48,6 +48,7 @@ export default function ProductDetail({ product }) {
             src={imageSrc} 
             alt={displayName} 
             className="w-full h-full object-cover max-h-[500px]"
+            loading="eager"
           />
         </div>
 
