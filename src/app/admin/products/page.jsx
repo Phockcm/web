@@ -1,31 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import AdminTable from "@/components/admin/Table/AdminTable";
-import Modal from "@/components/common/Modal";
-import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
-import { getAdminProducts, createProduct, updateProduct, deleteProduct } from "@/services/productServices";
+import Modal from "@/components/common/Modal";
+import { getAdminProducts, deleteProduct } from "@/services/productServices";
 import { getAllCategories } from "@/services/categoryServices";
 
-const convertToSlug = (text) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
 export default function ProductsManagement() {
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editProduct, setEditProduct] = useState(null);
-
-  const [formData, setFormData] = useState({
-    product_name: "",
-    slug: "",
-    price: "",
-    qty: "",
-    cat_id: "",
-    status: 1,
-  });
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
 
   const fetchProductsAndCategories = async () => {
     try {
@@ -47,71 +36,11 @@ export default function ProductsManagement() {
   }, []);
 
   const handleOpenAdd = () => {
-    setEditProduct(null);
-    setFormData({
-      product_name: "",
-      slug: "",
-      price: "",
-      qty: "",
-      cat_id: categories[0]?.id || "",
-      status: 1,
-    });
-    setSelectedFile(null);
-    setShowModal(true);
+    router.push("/admin/products/create");
   };
 
   const handleOpenEdit = (product) => {
-    setEditProduct(product);
-    setFormData({
-      product_name: product.product_name,
-      slug: product.slug,
-      price: product.price,
-      qty: product.qty,
-      cat_id: product.cat_id,
-      status: product.status,
-    });
-    setSelectedFile(null);
-    setShowModal(true);
-  };
-
-  const handleNameChange = (e) => {
-    const name = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      product_name: name,
-      slug: editProduct ? prev.slug : convertToSlug(name),
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const data = new FormData();
-      data.append("product_name", formData.product_name);
-      data.append("slug", formData.slug);
-      data.append("price", formData.price);
-      data.append("qty", formData.qty);
-      data.append("cat_id", formData.cat_id);
-      data.append("status", formData.status);
-      data.append("brand_id", 1);
-      
-      if (selectedFile) {
-        data.append("image", selectedFile);
-      }
-
-      if (editProduct) {
-        await updateProduct(editProduct.id, data);
-      } else {
-        await createProduct(data);
-      }
-      
-      setShowModal(false);
-      setLoading(true);
-      fetchProductsAndCategories();
-    } catch (error) {
-      console.error("Error saving product:", error);
-      alert("Đã xảy ra lỗi khi lưu sản phẩm. Vui lòng kiểm tra lại!");
-    }
+    router.push(`/admin/products/edit/${product.id}`);
   };
 
   const handleDeleteProduct = async (product) => {
@@ -123,6 +52,8 @@ export default function ProductsManagement() {
       } catch (error) {
         console.error("Error deleting product:", error);
         alert("Lỗi khi xóa sản phẩm.");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -173,6 +104,18 @@ export default function ProductsManagement() {
       },
     },
     {
+      key: "description",
+      label: "Mô tả",
+      render: (row) => {
+        const desc = row.description || "";
+        return (
+          <div className="max-w-[180px] truncate text-xs text-gray-500 font-medium" title={desc}>
+            {desc || "—"}
+          </div>
+        );
+      },
+    },
+    {
       key: "status",
       label: "Trạng thái",
       render: (row) => {
@@ -197,9 +140,14 @@ export default function ProductsManagement() {
           <h2 className="text-xl font-bold text-gray-800">Danh sách sản phẩm</h2>
           <p className="text-xs text-gray-400 mt-1">Quản lý kho hàng, cập nhật thông tin chi tiết các sản phẩm.</p>
         </div>
-        <Button onClick={handleOpenAdd} className="shrink-0 font-semibold flex items-center gap-1.5 h-11 px-5 rounded-xl cursor-pointer">
-          <span className="text-base font-bold">+</span> Thêm sản phẩm
-        </Button>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/products/trash" className="shrink-0 px-4 h-11 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-all no-underline flex items-center gap-1.5 cursor-pointer">
+            🗑️ Thùng rác
+          </Link>
+          <Button onClick={handleOpenAdd} className="shrink-0 font-semibold flex items-center gap-1.5 h-11 px-5 rounded-xl cursor-pointer">
+            <span className="text-base font-bold">+</span> Thêm sản phẩm
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-xs">
@@ -209,6 +157,7 @@ export default function ProductsManagement() {
           <AdminTable
             columns={tableColumns}
             products={products}
+            onView={setViewingProduct}
             onEdit={handleOpenEdit}
             onDelete={handleDeleteProduct}
             rowKey="id"
@@ -216,107 +165,89 @@ export default function ProductsManagement() {
         )}
       </div>
 
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Tên sản phẩm"
-            value={formData.product_name}
-            onChange={handleNameChange}
-            placeholder="Nhập tên sản phẩm..."
-            required
-          />
+      {viewingProduct && (
+        <Modal
+          isOpen={!!viewingProduct}
+          onClose={() => setViewingProduct(null)}
+          title="Chi tiết sản phẩm"
+        >
+          <div className="space-y-6">
+            {/* Details Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Left column: image */}
+              <div className="md:col-span-1 border border-gray-200 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center aspect-square">
+                <img
+                  src={
+                    viewingProduct.image
+                      ? viewingProduct.image.startsWith("http")
+                        ? viewingProduct.image
+                        : viewingProduct.image.startsWith("products/")
+                        ? `http://127.0.0.1:8000/storage/${viewingProduct.image}`
+                        : `/shop/images/${viewingProduct.image}`
+                      : "https://via.placeholder.com/150"
+                  }
+                  alt={viewingProduct.product_name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              {/* Right column: general specs */}
+              <div className="md:col-span-2 space-y-3.5">
+                <div>
+                  <span className="text-xs font-bold text-blue-650 bg-blue-50 px-2.5 py-1 rounded-full uppercase">
+                    {categories.find(c => String(c.id) === String(viewingProduct.cat_id))?.category_name || "Chưa phân loại"}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">{viewingProduct.product_name}</h3>
+                
+                <div className="grid grid-cols-2 gap-4 border-t border-b border-gray-100 py-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Giá bán</p>
+                    <p className="font-bold text-red-500">
+                      {typeof viewingProduct.price === "number" ? viewingProduct.price.toLocaleString("vi-VN") + "đ" : viewingProduct.price}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Tồn kho</p>
+                    <p className="font-semibold text-gray-700">{viewingProduct.qty} sản phẩm</p>
+                  </div>
+                </div>
 
-          <Input
-            label="Đường dẫn tĩnh (Slug)"
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            placeholder="slug-san-pham..."
-            required
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Giá bán (VNĐ)"
-              type="number"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              placeholder="Ví dụ: 15000000"
-              required
-            />
-            <Input
-              label="Số lượng tồn kho"
-              type="number"
-              value={formData.qty}
-              onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
-              placeholder="Ví dụ: 50"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-650">Danh mục</label>
-              <select
-                value={formData.cat_id}
-                onChange={(e) => setFormData({ ...formData, cat_id: e.target.value })}
-                className="w-full border border-gray-250 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-150 focus:border-blue-500 transition-all duration-200"
-                required
-              >
-                <option value="">Chọn danh mục</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.category_name}
-                  </option>
-                ))}
-              </select>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <p className="text-gray-400 font-medium">Đường dẫn tĩnh (Slug)</p>
+                    <p className="text-gray-650 font-mono mt-0.5">{viewingProduct.slug}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 font-medium">Trạng thái</p>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1 ${
+                      viewingProduct.status === 1 || viewingProduct.status === "1"
+                        ? "bg-green-50 text-green-600"
+                        : "bg-red-50 text-red-600"
+                    }`}>
+                      {viewingProduct.status === 1 || viewingProduct.status === "1" ? "Đang bán" : "Ngưng bán"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-650">Trạng thái</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: parseInt(e.target.value) })}
-                className="w-full border border-gray-250 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-150 focus:border-blue-500 transition-all duration-200"
-                required
-              >
-                <option value="1">Đang bán (Active)</option>
-                <option value="0">Ngưng bán (Inactive)</option>
-              </select>
+            {/* Bottom: Description */}
+            <div className="border-t border-gray-150 pt-4 space-y-1.5">
+              <h4 className="text-sm font-semibold text-gray-700">Mô tả sản phẩm</h4>
+              <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-xl border border-gray-150 leading-relaxed max-h-[200px] overflow-y-auto whitespace-pre-wrap">
+                {viewingProduct.description || "Không có mô tả cho sản phẩm này."}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end pt-2 border-t border-gray-100">
+              <Button onClick={() => setViewingProduct(null)} className="h-10 px-5 rounded-xl cursor-pointer">
+                Đóng
+              </Button>
             </div>
           </div>
-
-          <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-xs font-semibold text-gray-650">Hình ảnh sản phẩm</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="w-full border border-gray-250 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-150 focus:border-blue-500 transition-all duration-200"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowModal(false)}
-              className="h-11 px-5 rounded-xl cursor-pointer"
-            >
-              Hủy bỏ
-            </Button>
-            <Button
-              type="submit"
-              className="h-11 px-5 rounded-xl cursor-pointer font-bold"
-            >
-              {editProduct ? "Lưu thay đổi" : "Tạo sản phẩm"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 }

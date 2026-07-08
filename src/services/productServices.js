@@ -97,3 +97,18 @@ export async function getHotProducts(limit = 4) {
     const res = await axiosClient.get(`/hotProducts/${limit}`);
     return res.data;
 }
+
+export async function getTrashedProducts() {
+    const res = await axiosClient.get("/trashedProductsByPageSize?pagination[pageSize]=100000");
+    return res.data.data || res.data;
+}
+
+export async function restoreProduct(id) {
+    const res = await axiosClient.patch(`/products/${id}/restore`);
+    return res.data;
+}
+
+export async function forceDeleteProduct(id) {
+    const res = await axiosClient.delete(`/products/${id}/force`);
+    return res.data;
+}

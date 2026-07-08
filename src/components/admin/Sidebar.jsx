@@ -18,6 +18,8 @@ export default function Sidebar({ isOpen }) {
         return "🟨";
       case "orders":
         return "📋";
+      case "users":
+        return "👥";
       default:
         return "⚙️";
     }
@@ -50,7 +52,7 @@ export default function Sidebar({ isOpen }) {
               }`}
             >
               <span className="text-lg">{getIcon(item.label)}</span>
-              <span>{item.label === "Products" ? "Sản phẩm" : item.label === "Categories" ? "Danh mục" : item.label === "Orders" ? "Đơn hàng" : item.label}</span>
+              <span>{item.label === "Products" ? "Sản phẩm" : item.label === "Categories" ? "Danh mục" : item.label === "Orders" ? "Đơn hàng" : item.label === "Users" ? "Tài khoản" : item.label}</span>
             </Link>
           );
         })}

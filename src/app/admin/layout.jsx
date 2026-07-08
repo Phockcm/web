@@ -18,6 +18,7 @@ export default function AdminLayout({ children }) {
     if (pathname.includes("/admin/products")) return "Sản phẩm";
     if (pathname.includes("/admin/categories")) return "Danh mục";
     if (pathname.includes("/admin/orders")) return "Đơn hàng";
+    if (pathname.includes("/admin/users")) return "Tài khoản";
     return "Dashboard";
   };
 

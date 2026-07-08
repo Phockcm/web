@@ -24,3 +24,13 @@ export async function logout() {
   const res = await axiosClient.post("/auth/logout");
   return res.data;
 }
+
+export async function updateMe(formData) {
+  // Use POST with _method=PUT to allow file uploads over PUT in Laravel
+  const res = await axiosClient.post("/auth/me", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}

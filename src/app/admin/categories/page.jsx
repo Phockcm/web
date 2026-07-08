@@ -64,7 +64,7 @@ export default function CategoriesManagement() {
     setFormData((prev) => ({
       ...prev,
       name,
-      slug: editCategory ? prev.slug : convertToSlug(name),
+      slug: convertToSlug(name),
     }));
   };
 

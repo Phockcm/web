@@ -11,27 +11,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Load user from token on mount / reload
-  useEffect(() => {
-    async function loadUser() {
-      if (typeof window !== "undefined") {
-        const token = localStorage.getItem("token");
-        if (token) {
-          try {
-            const userData = await getCurrentUser();
-            setUser(userData);
-          } catch (error) {
-            console.error("Failed to load user with token", error);
-            // If token is invalid or expired, clear it
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            setUser(null);
-          }
+  const reloadUser = async () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const userData = await getCurrentUser();
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+          return userData;
+        } catch (error) {
+          console.error("Failed to load user with token", error);
+          // If token is invalid or expired, clear it
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setUser(null);
         }
       }
-      setLoading(false);
     }
-    loadUser();
+    return null;
+  };
+
+  // Load user from token on mount / reload
+  useEffect(() => {
+    reloadUser().finally(() => setLoading(false));
   }, []);
 
   const login = async (username, password) => {
@@ -149,6 +152,7 @@ export function AuthProvider({ children }) {
         loginAdmin,
         register,
         logout,
+        reloadUser,
       }}
     >
       {children}

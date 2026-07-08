@@ -21,9 +21,22 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-gray-700">
-                Hi, {user.name || user.username}
-              </span>
+              <Link href="/account" className="flex items-center gap-2 no-underline group cursor-pointer">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center font-bold text-xs text-blue-600 transition-all group-hover:border-blue-400">
+                  {user?.image ? (
+                    <img 
+                      src={user.image.startsWith("http") ? user.image : `http://127.0.0.1:8000/storage/${user.image}`} 
+                      alt={user.name || user.username} 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    (user?.name || user?.username || "U").substring(0, 1).toUpperCase()
+                  )}
+                </div>
+                <span className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">
+                  Hi, {user.name || user.username}
+                </span>
+              </Link>
               {user?.role === "admin" && (
                 <Link 
                   href="/admin/products"
