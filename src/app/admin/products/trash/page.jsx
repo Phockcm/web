@@ -79,7 +79,8 @@ export default function TrashBinPage() {
           if (row.image.startsWith("http://") || row.image.startsWith("https://")) {
             imageSrc = row.image;
           } else if (row.image.startsWith("products/")) {
-            imageSrc = `http://127.0.0.1:8000/storage/${row.image}`;
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+            imageSrc = `${backendUrl}/storage/${row.image}`;
           } else {
             imageSrc = `/shop/images/${row.image}`;
           }
@@ -199,7 +200,7 @@ export default function TrashBinPage() {
                       ? viewingProduct.image.startsWith("http")
                         ? viewingProduct.image
                         : viewingProduct.image.startsWith("products/")
-                        ? `http://127.0.0.1:8000/storage/${viewingProduct.image}`
+                        ? `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/storage/${viewingProduct.image}`
                         : `/shop/images/${viewingProduct.image}`
                       : "https://via.placeholder.com/150"
                   }

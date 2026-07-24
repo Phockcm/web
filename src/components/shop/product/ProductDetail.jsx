@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/contexts/ToastContext";
+import { useRouter } from "next/navigation";
 
 export default function ProductDetail({ product }) {
   const [quantity, setQuantity] = useState(1);
+  const { addToCart } = useCart();
+  const { showToast } = useToast();
+  const router = useRouter();
 
   if (!product) {
     return (
@@ -18,8 +24,9 @@ export default function ProductDetail({ product }) {
     );
   }
 
-  const { id, name, product_name, price, image, category, description } = product;
+  const { id, name, product_name, price, image, category, description, qty } = product;
   const displayName = name || product_name || "Sản phẩm";
+  const stock = Number(qty ?? 9999);
 
   // Format price
   const formattedPrice = typeof price === "number"
@@ -32,21 +39,41 @@ export default function ProductDetail({ product }) {
     if (image.startsWith("http://") || image.startsWith("https://")) {
       imageSrc = image;
     } else if (image.startsWith("products/")) {
-      imageSrc = `http://127.0.0.1:8000/storage/${image}`;
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+      imageSrc = `${backendUrl}/storage/${image}`;
     } else {
       imageSrc = `/shop/images/${image}`;
     }
   }
 
+  const handleAddToCart = () => {
+    const result = addToCart(product, quantity);
+    if (result.success) {
+      showToast(result.message, "success");
+    } else {
+      showToast(result.message, "error");
+    }
+  };
+
+  const handleBuyNow = () => {
+    const result = addToCart(product, quantity);
+    if (result.success) {
+      showToast("Đang chuyển đến trang thanh toán...", "info");
+      router.push("/cart");
+    } else {
+      showToast(result.message, "error");
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl border border-gray-150 shadow-xs p-6 md:p-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        
+
         {/* Left Column: Image */}
         <div className="bg-gray-50 rounded-2xl overflow-hidden aspect-square border border-gray-100 flex items-center justify-center">
-          <img 
-            src={imageSrc} 
-            alt={displayName} 
+          <img
+            src={imageSrc}
+            alt={displayName}
             className="w-full h-full object-cover max-h-[500px]"
             loading="eager"
           />
@@ -88,36 +115,54 @@ export default function ProductDetail({ product }) {
             <div className="flex items-center gap-3.5">
               <span className="text-xs font-semibold text-gray-650">Số lượng:</span>
               <div className="flex items-center border border-gray-250 rounded-xl overflow-hidden h-10 w-28 shrink-0">
-                <button 
+                <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8.5 h-full hover:bg-gray-50 font-bold transition-colors border-r border-gray-250"
+                  className="w-8.5 h-full hover:bg-gray-50 font-bold transition-colors border-r border-gray-250 cursor-pointer"
                 >
                   -
                 </button>
                 <span className="flex-1 text-center text-sm font-semibold text-gray-700">
                   {quantity}
                 </span>
-                <button 
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-8.5 h-full hover:bg-gray-50 font-bold transition-colors border-l border-gray-250"
+                <button
+                  onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                  disabled={quantity >= stock}
+                  className="w-8.5 h-full hover:bg-gray-50 font-bold transition-colors border-l border-gray-250 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
               </div>
-              <span className="text-xs text-gray-400">Còn 42 sản phẩm có sẵn</span>
+              <span className={`text-xs font-medium ${stock <= 5 ? "text-red-500" : "text-gray-400"}`}>
+                {stock <= 0
+                  ? "Hết hàng"
+                  : stock <= 5
+                  ? `⚠️ Chỉ còn ${stock} sản phẩm`
+                  : `Còn ${stock} sản phẩm`}
+              </span>
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <button className="h-12 rounded-xl border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm">
-                Thêm vào giỏ
-              </button>
-              <button className="h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors text-sm">
-                Mua ngay
-              </button>
-            </div>
+            {stock <= 0 ? (
+              <div className="h-12 rounded-xl bg-gray-100 text-gray-400 font-bold flex items-center justify-center text-sm">
+                Hết hàng
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={handleAddToCart}
+                  className="h-12 rounded-xl border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm cursor-pointer"
+                >
+                  Thêm vào giỏ
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  className="h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors text-sm cursor-pointer"
+                >
+                  Mua ngay
+                </button>
+              </div>
+            )}
           </div>
-
         </div>
       </div>
     </div>

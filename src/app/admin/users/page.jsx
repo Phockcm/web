@@ -97,13 +97,13 @@ export default function UsersManagement() {
       } else {
         const parts = emailVal.split("@");
         const domain = parts[1];
-        
+
         if (!domain.endsWith(".com")) {
-          newErrors.email = "Email phải có đuôi là .com";
+          newErrors.email = "Email phải có đuôi là .com (ví dụ: @gmail.com hoặc @hotmail.com).";
         } else {
           const provider = domain.substring(0, domain.length - 4); // Remove ".com"
-          if (provider !== "gmail" && provider !== "outlook") {
-            newErrors.email = "Sau ký tự @ phải là gmail hoặc outlook (ví dụ: @gmail.com hoặc @outlook.com)";
+          if (provider !== "gmail" && provider !== "hotmail") {
+            newErrors.email = "Email chỉ chấp nhận @gmail.com hoặc @hotmail.com.";
           }
         }
       }
@@ -113,9 +113,14 @@ export default function UsersManagement() {
     if (!formData.phone || !formData.phone.trim()) {
       newErrors.phone = "Số điện thoại không được để trống.";
     } else {
+      const phoneVal = formData.phone.trim();
       const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(formData.phone.trim())) {
-        newErrors.phone = "Số điện thoại phải đủ 10 số và chỉ chứa chữ số.";
+      if (!phoneRegex.test(phoneVal)) {
+        if (!/^\d+$/.test(phoneVal)) {
+          newErrors.phone = "Số điện thoại chỉ được chứa chữ số (0–9).";
+        } else {
+          newErrors.phone = "Số điện thoại phải đúng 10 chữ số.";
+        }
       }
     }
 
@@ -184,9 +189,10 @@ export default function UsersManagement() {
       render: (row) => {
         let avatarSrc = "https://via.placeholder.com/40";
         if (row.image) {
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
           avatarSrc = row.image.startsWith("http")
             ? row.image
-            : `http://127.0.0.1:8000/storage/${row.image}`;
+            : `${backendUrl}/storage/${row.image}`;
         }
         return (
           <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center font-bold text-xs text-blue-650">

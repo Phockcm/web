@@ -1,6 +1,8 @@
 
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { ToastProvider } from "@/contexts/ToastContext";
 import { Be_Vietnam_Pro } from "next/font/google";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -14,10 +16,13 @@ export default function RootLayout({ children }) {
     <html lang="vi">
       <body className={`${beVietnamPro.className} min-h-screen bg-gray-100 text-gray-800 antialiased`}>
         <AuthProvider>
-          {children}
+          <CartProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>
   );
 }
-

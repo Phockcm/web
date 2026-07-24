@@ -45,7 +45,8 @@ export default function ProductForm({ initialValues, onSubmit, categories = [], 
         if (img.startsWith("http://") || img.startsWith("https://")) {
           setImagePreview(img);
         } else if (img.startsWith("products/")) {
-          setImagePreview(`http://127.0.0.1:8000/storage/${img}`);
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+          setImagePreview(`${backendUrl}/storage/${img}`);
         } else {
           setImagePreview(`/shop/images/${img}`);
         }
@@ -96,7 +97,8 @@ export default function ProductForm({ initialValues, onSubmit, categories = [], 
         if (img.startsWith("http://") || img.startsWith("https://")) {
           setImagePreview(img);
         } else if (img.startsWith("products/")) {
-          setImagePreview(`http://127.0.0.1:8000/storage/${img}`);
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+          setImagePreview(`${backendUrl}/storage/${img}`);
         } else {
           setImagePreview(`/shop/images/${img}`);
         }

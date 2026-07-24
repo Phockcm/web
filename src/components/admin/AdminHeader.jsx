@@ -7,9 +7,10 @@ export default function AdminHeader({ title = "Dashboard" }) {
   // Map avatar image
   let avatarSrc = "";
   if (user?.image) {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
     avatarSrc = user.image.startsWith("http")
       ? user.image
-      : `http://127.0.0.1:8000/storage/${user.image}`;
+      : `${backendUrl}/storage/${user.image}`;
   }
 
   return (

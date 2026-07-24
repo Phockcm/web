@@ -39,10 +39,11 @@ export default function AccountPage() {
         confirmPassword: "",
       });
       if (user.image) {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
         setImagePreview(
           user.image.startsWith("http")
             ? user.image
-            : `http://127.0.0.1:8000/storage/${user.image}`
+            : `${backendUrl}/storage/${user.image}`
         );
       } else {
         setImagePreview("");
@@ -66,10 +67,11 @@ export default function AccountPage() {
     } else {
       // Revert to original database image
       if (user?.image) {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
         setImagePreview(
           user.image.startsWith("http")
             ? user.image
-            : `http://127.0.0.1:8000/storage/${user.image}`
+            : `${backendUrl}/storage/${user.image}`
         );
       } else {
         setImagePreview("");
@@ -93,13 +95,13 @@ export default function AccountPage() {
       } else {
         const parts = emailVal.split("@");
         const domain = parts[1];
-        
+
         if (!domain.endsWith(".com")) {
-          newErrors.email = "Email phải có đuôi là .com";
+          newErrors.email = "Email phải có đuôi là .com (ví dụ: @gmail.com hoặc @hotmail.com).";
         } else {
           const provider = domain.substring(0, domain.length - 4); // Remove ".com"
-          if (provider !== "gmail" && provider !== "outlook") {
-            newErrors.email = "Sau ký tự @ phải là gmail hoặc outlook (ví dụ: @gmail.com hoặc @outlook.com)";
+          if (provider !== "gmail" && provider !== "hotmail") {
+            newErrors.email = "Email chỉ chấp nhận @gmail.com hoặc @hotmail.com.";
           }
         }
       }
@@ -109,9 +111,14 @@ export default function AccountPage() {
     if (!formData.phone || !formData.phone.trim()) {
       newErrors.phone = "Số điện thoại không được để trống.";
     } else {
+      const phoneVal = formData.phone.trim();
       const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(formData.phone.trim())) {
-        newErrors.phone = "Số điện thoại phải đủ 10 số và chỉ chứa chữ số.";
+      if (!phoneRegex.test(phoneVal)) {
+        if (!/^\d+$/.test(phoneVal)) {
+          newErrors.phone = "Số điện thoại chỉ được chứa chữ số (0–9).";
+        } else {
+          newErrors.phone = "Số điện thoại phải đúng 10 chữ số.";
+        }
       }
     }
 

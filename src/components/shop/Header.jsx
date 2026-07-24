@@ -3,9 +3,11 @@
 import Menu from "@/components/shop/Menu";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { cartCount } = useCart();
 
   return (
     <nav className="bg-white shadow sticky top-0 z-40 border-b border-gray-100">
@@ -25,7 +27,7 @@ export default function Header() {
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center font-bold text-xs text-blue-600 transition-all group-hover:border-blue-400">
                   {user?.image ? (
                     <img 
-                      src={user.image.startsWith("http") ? user.image : `http://127.0.0.1:8000/storage/${user.image}`} 
+                      src={user.image.startsWith("http") ? user.image : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/storage/${user.image}`} 
                       alt={user.name || user.username} 
                       className="w-full h-full object-cover" 
                     />
@@ -70,10 +72,14 @@ export default function Header() {
           
           <Link 
             href="/cart" 
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-sm font-bold no-underline transition-all duration-200"
+            className="relative flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-sm font-bold no-underline transition-all duration-200"
           >
             <span>🛒</span>
-            <span className="bg-blue-600 text-white text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-bold">0</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] rounded-full flex items-center justify-center font-bold px-1">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
